@@ -6,7 +6,7 @@ A Python class that scrapes ESRI Rest Endpoints and exports data to a geodatabas
 This class is instantiated with the Esri REST Endpoint of a feature layer inside a map service.  For secured map services, you can include an optional token when instantiating the class. 
 e.g. 
 
-import RestCacheClass
+import RestCacheClass <br>
 earthquakes = RestCacheClass.RestCache('http://rmgsc.cr.usgs.gov/ArcGIS/rest/services/nhss_haz/MapServer/3')
 
 The RestCache object scrapes the feature layer page for it's various attributes: fields, wkid, max record count, name, and geometry type.
@@ -18,5 +18,7 @@ This class has two primary methods:
 
 createFeatureClass
 ==================
+
+This attribute
 
 
