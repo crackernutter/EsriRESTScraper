@@ -7,7 +7,7 @@ This class is instantiated with the Esri REST Endpoint of a feature layer inside
 e.g. 
 
 import RestCacheClass <br>
-earthquakes = RestCacheClass.RestCache('http://rmgsc.cr.usgs.gov/ArcGIS/rest/services/nhss_haz/MapServer/3')
+earthquakes = RestCacheClass.RestCache(http://rmgsc.cr.usgs.gov/ArcGIS/rest/services/nhss_haz/MapServer/3)
 
 The RestCache object scrapes the feature layer page for it's various attributes: fields, wkid, max record count, name, and geometry type.
 
