@@ -25,7 +25,7 @@ createFeatureClass
 
 This method creates a feature class in a geodabase with the appropriate spatial reference, geometry type, and the appropriate fields (and field lengths, etc).  This method really only needs to be run a single time, then you have the correct feature class locally, and all you need to do is update it.
 
-The name of the feature class is derived from the name in the REST endpoing, although this can be overwritten with an optional parameter.  
+The name of the feature class is derived from the name in the REST endpoint, although this can be overwritten with an optional parameter.  
 
 ### Issues:
 
