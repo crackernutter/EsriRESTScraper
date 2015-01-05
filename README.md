@@ -25,7 +25,7 @@ createFeatureClass
 
 This method creates a feature class in a geodabase with the appropriate spatial reference, geometry type, and the appropriate fields (and field lengths, etc).  This method really only needs to be run a single time, then you have the correct feature class locally, and all you need to do is update it.
 
-The name of the feature class is derived from the name in the REST endpoing, although this can be overwritten with an optional parameter.  
+The name of the feature class is derived from the name in the REST endpoint, although this can be overwritten with an optional parameter.  
 
 ### Issues:
 
@@ -42,11 +42,11 @@ updateFeatureClass
 
 This method makes one or more REST calls, parses the data, and updates your local geodatabase.  Pretty straightforward.  This method accepts as input the feature class to update, a single query or list of queries (the default is "1=1"), and a Boolean value on whether to append to the existing dataset or overwrite (default is to overwrite since I didn't want to deal with differentials).
 
-The method will gracefully end if there is a schema mismatch between the REST endpoint and the feature class to update, or if one of the queries returns a number of records equal to or more than the max records attribute specified in the REST endpoing.  
+The method will gracefully end if there is a schema mismatch between the REST endpoint and the feature class to update, or if one of the queries returns a number of records equal to or more than the max records attribute specified in the REST endpoint.  
 
 ### Issues:
 
-1. The method cannot handle how to deal with a query that returns more records and the max allowed by the service (default for most Esri REST endpoints is 1000.  Because using this data would result in an incomplete dataset, I just have the method throw an error.  A way around this is to just specific a series of queries in the query parameter, so long as each query won't exceed the max records, and the queries won't result in duplicate records.  However, a great goal would be to add some recursive function that creates a finer and finer geographic mesh, and break up the queries geographically until no query returns more records then the max.  This would be difficult for me, but is a great task for someone with the time and energy to devote to it.    
+1. The method cannot handle how to deal with a query that returns more records and the max allowed by the service (default for most Esri REST endpoints is 1000).  Because using this data would result in an incomplete dataset, I just have the method throw an error.  A way around this is to just specify a series of queries in the query parameter, so long as each query won't exceed the max records, and the queries won't result in duplicate records.  However, a great goal would be to add some recursive function that creates a finer and finer geographic mesh, and break up the queries geographically until no query returns more records then the max.  This would be difficult for me, but is a great task for someone with the time and energy to devote to it.    
 
 ```python
 earthquakesScraper.updateFeatureClass(earthquakesData, ["magnitude > 4"])
