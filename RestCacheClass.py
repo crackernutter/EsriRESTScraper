@@ -1,4 +1,4 @@
-import arcpy, os, sys, urllib2, urllib, json, re, datetime, httplib
+import arcpy, os, sys, urllib2, urllib, json, re, datetime, httplib, time
 ########Exceptions###############
 class SchemaMismatch(Exception):
     def __init__(self, value):
@@ -15,8 +15,12 @@ class TooManyRecords(Exception):
         self.value = value
     def __str__(self):
         return self.value
-
-
+class MapServiceError(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return self.value
+    
 ########GENERAL FUNCTIONS#################
 #Basic function to return an array with geometry from a multi-geometry object (polyline and polygon)
 def getMultiGeometry(geometry):
@@ -31,7 +35,8 @@ def getMultiGeometry(geometry):
 
 #Basic function to return Boolean of whether the uri is a file geodatabase or not
 def validWorkspace(uri):
-    if ".gdb" in str(uri):
+
+    if ".gdb" in str(uri) or ".sde" in str(uri):
         return True
     else:
         return False
@@ -77,6 +82,10 @@ class RestCache:
                 headers = response.info().headers
             except httplib.BadStatusLine as e:
                 return self._getEsriRESTJSON(url, params, attempt+1)
+            except urllib2.HTTPError as e:
+                print "sleeping"
+                time.sleep(5)
+                return self._getEsriRESTJSON(url, params, attempt+1)
             regex = '\d+'
             index = findIndex(headers,"Content-Length")
             if index != -999:
@@ -98,12 +107,15 @@ class RestCache:
                     return self._getEsriRESTJSON(url, params, attempt+1)
             else:
                 final = json.loads(response.read())
-                return final
+                if 'error' in final.keys():
+                    return self._getEsriRESTJSON(url, params, attempt+1)
+                else:
+                    return final
         else:
-            return "Error"
+            raise MapServiceError("Error Accessing Map Service " + self.url)
 
-    #Function that sets the attributes of the RestCache object.  All attributes are retreived from the URL endpoint
-    #Do do - M values and Z values
+    #Function that sets the attributes of the RestCache object.  All attributes are retrieved from the URL endpoint
+    #To do - M values and Z values
     def __setAttributes(self):
         values = {"f":"json"}
         layerInfo = self._getEsriRESTJSON(self.url,values)
@@ -139,7 +151,7 @@ class RestCache:
     #Primary public function creates the feature class and all necessary fields
     def createFeatureClass(self, location, name=""):
         if not validWorkspace(location):
-            raise IncorrectWorkspaceType("Incorrect workspace - feature class must be created in a local geodatase")
+            raise IncorrectWorkspaceType("Incorrect workspace - feature class must be created in a local geodatabase")
         if name!="":
             self.name = name
         self.featureClassLocation = location
@@ -153,7 +165,7 @@ class RestCache:
         for field in fields:
                 self.__createField(field)
 
-    #Fucntion to create an individual field for a feature class
+    #Function to create an individual field for a feature class
     #To do - add field types for BLOB and other more rare field types
     def __createField(self, field):
         name = field['name']
@@ -177,14 +189,15 @@ class RestCache:
         else:
             fieldType = "Unknown"
         featureClass = self.featureClassLocation + "\\" + self.name
-        arcpy.AddField_management(in_table=featureClass,field_name=arcpy.ValidateFieldName(name, self.featureClassLocation),field_type=fieldType, field_length=fieldLength)
+        validatedName =  arcpy.ValidateFieldName(name, self.featureClassLocation)
+        arcpy.AddField_management(in_table=featureClass,field_name=name,field_type=fieldType, field_length=fieldLength)
 
     #Primary public function to update a feature class based on a specific query
     #Function accepts string or list as query, and will iterate over list of queries for better performance
     def updateFeatureClass(self, featureClass, query=["1=1"], append=False):
         #check for errors
         if not validWorkspace(featureClass):
-            raise IncorrectWorkspaceType("Incorrect workspace - feature class must be created in a local geodatase")
+            raise IncorrectWorkspaceType("Incorrect workspace - feature class must be created in a local geodatabase")
         if not self.__matchSchema(featureClass):
             raise SchemaMismatch("Schema of input feature class does not match object schema")
         #Append or overwrite mode
@@ -223,6 +236,8 @@ class RestCache:
                                     attributes.append(datetime.datetime.fromtimestamp(feature['attributes'][field['name']]))
                             except ValueError:
                                 attributes.append(None)
+                            except TypeError:
+                                attributes.append(None)
                         else:
                             attributes.append(feature['attributes'][field['name']])
                 cursor.insertRow(attributes)
@@ -239,7 +254,7 @@ class RestCache:
                 fClassFields.append(field.name)
         fClassFields.insert(0, 'Shape@')
         objFields = [f['name'] for f in self.updateFields]
-        return fClassFields == objFields
+        return sorted(fClassFields) == sorted(objFields)
 
 
     #Simple function to check that the number of records is less than the maximum possible to prevent an incomplete cache
