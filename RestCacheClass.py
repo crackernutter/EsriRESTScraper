@@ -20,7 +20,7 @@ class MapServiceError(Exception):
         self.value = value
     def __str__(self):
         return self.value
-    
+
 ########GENERAL FUNCTIONS#################
 #Basic function to return an array with geometry from a multi-geometry object (polyline and polygon)
 def getMultiGeometry(geometry):
@@ -280,7 +280,7 @@ class RestCache:
             return polyGeom
         elif "POLYLINE" in self.geometryType:
             paths = geom['paths']
-            polyline = getMuliGeometry(paths)
+            polyline = getMultiGeometry(paths)
             lineGeom = arcpy.Polyline(polyline, self.sr)
             return lineGeom
         elif "POINT" in self.geometryType:
