@@ -20,7 +20,7 @@ class MapServiceError(Exception):
         self.value = value
     def __str__(self):
         return self.value
-
+    
 ########GENERAL FUNCTIONS#################
 #Basic function to return an array with geometry from a multi-geometry object (polyline and polygon)
 def getMultiGeometry(geometry):
@@ -200,14 +200,16 @@ class RestCache:
             raise IncorrectWorkspaceType("Incorrect workspace - feature class must be created in a local geodatabase")
         if not self.__matchSchema(featureClass):
             raise SchemaMismatch("Schema of input feature class does not match object schema")
-        #Append or overwrite mode
-        if not append:
-                arcpy.DeleteFeatures_management(featureClass)
-        #Convert query to list if not
-        if type(query) is not list:
+        #make correct query
+        if query == None:
+            queries = ["1=1"]
+        elif type(query) is not list:
             queries = [query]
         else:
             queries = query
+        #Append or overwrite mode
+        if not append:
+                arcpy.DeleteFeatures_management(featureClass)
 
         #instantiate cursor
         updateFields = [f['name'] for f in self.updateFields]
@@ -239,7 +241,19 @@ class RestCache:
                             except TypeError:
                                 attributes.append(None)
                         else:
-                            attributes.append(feature['attributes'][field['name']])
+                            #getting strange OverflowError Python int too large to convert to C long, so casting section
+                            #getting problem with some services where some fields aren't returned in results so added try/catch block
+                            try:
+                                newAttribute = feature['attributes'][field['name']]
+                                if type(newAttribute) is long:
+                                    if type(int(newAttribute)) is long:
+                                        attributes.append(float(newAttribute))
+                                    else:
+                                        attributes.append(newAttribute)
+                                else:
+                                    attributes.append(newAttribute)
+                            except KeyError, e:
+                                attributes.append(None)
                 cursor.insertRow(attributes)
         #Delete cursor
         del cursor
@@ -280,7 +294,7 @@ class RestCache:
             return polyGeom
         elif "POLYLINE" in self.geometryType:
             paths = geom['paths']
-            polyline = getMultiGeometry(paths)
+            polyline = getMuliGeometry(paths)
             lineGeom = arcpy.Polyline(polyline, self.sr)
             return lineGeom
         elif "POINT" in self.geometryType:
