@@ -20,6 +20,12 @@ class MapServiceError(Exception):
         self.value = value
     def __str__(self):
         return self.value
+class NullGeometryError(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return self.value
+
     
 ########GENERAL FUNCTIONS#################
 #Basic function to return an array with geometry from a multi-geometry object (polyline and polygon)
@@ -63,9 +69,10 @@ def findIndex(data, string):
 
 ###############REST CACHE CLASS###########################
 class RestCache:
-    def __init__(self, url, token=None):
+    def __init__(self, url, token=None, userFields = []):
         self.url = url
         self.token = token
+        self.userFields = userFields
         self.__setAttributes()
 
     def __str__(self):
@@ -126,7 +133,11 @@ class RestCache:
         name=arcpy.ValidateTableName(layerInfo['name'])
         self.name=name
         #Spatial Reference - both the wkid and the arcpy SpatialReference object
-        wkid = layerInfo['extent']['spatialReference']['wkid']
+        #in case it's in a wkt
+        try:
+            wkid = layerInfo['extent']['spatialReference']['wkid']
+        except:
+            wkid = 4326
         sr = arcpy.SpatialReference()
         sr.factoryCode = int(wkid)
         sr.create()
@@ -136,7 +147,7 @@ class RestCache:
         fields = layerInfo['fields']
         updateFields = []
         for field in fields:
-            if (field['type'] == 'esriFieldTypeOID' or field['type'] == 'esriFieldTypeGeometry' or 'shape' in field['name'].lower() or field['type'] == 'esriFieldTypeGUID'):
+            if (field['type'] == 'esriFieldTypeOID' or field['type'] == 'esriFieldTypeGeometry' or 'shape' in field['name'].lower() or field['type'] == 'esriFieldTypeGUID' or field['name'] in self.userFields):
                 pass
             else:
                 updateFields.append(field)
@@ -194,7 +205,10 @@ class RestCache:
 
     #Primary public function to update a feature class based on a specific query
     #Function accepts string or list as query, and will iterate over list of queries for better performance
-    def updateFeatureClass(self, featureClass, query=["1=1"], append=False):
+    def updateFeatureClass(self, featureClass, query=["1=1"], append=False, userFields=[]):
+        #check if user fileds already exist
+        if not self.userFields:
+            self.userFields = userFields
         #check for errors
         if not validWorkspace(featureClass):
             raise IncorrectWorkspaceType("Incorrect workspace - feature class must be created in a local geodatabase")
@@ -218,6 +232,7 @@ class RestCache:
         #iterate over queries
         for query in queries:
             if not self.__numRecordsLessThanMax(query):
+                del cursor
                 raise TooManyRecords("Query returns more than max allowed. Please refine query: " + query)
             rValues = {"where":query,
                "f":"json",
@@ -225,7 +240,14 @@ class RestCache:
                 "outFields": "*"}
             featureData = self._getEsriRESTJSON(self.url+"/query",rValues)
             for feature in featureData['features']:
-                geom = self.__getGeometry(feature['geometry'])
+                #if geometry is bad, skip record
+                try:
+                    geom = self.__getGeometry(feature['geometry'])
+                except NullGeometryError as e:
+                    print e
+                    continue
+                except:
+                    print "Some other geometry error"
                 attributes = []
                 attributes.append(geom)
                 for field in self.updateFields:
@@ -262,7 +284,7 @@ class RestCache:
     def __matchSchema(self, featureClass):
         fClassFields = []
         for field in arcpy.ListFields(featureClass):
-            if (field.name.lower() == 'objectid' or field.name.lower() == 'oid' or 'shape' in field.name.lower()):
+            if (field.name.lower() == 'objectid' or field.name.lower() == 'oid' or 'shape' in field.name.lower() or field.name in self.userFields):
                 pass
             else:
                 fClassFields.append(field.name)
@@ -298,6 +320,9 @@ class RestCache:
             lineGeom = arcpy.Polyline(polyline, self.sr)
             return lineGeom
         elif "POINT" in self.geometryType:
-            point = arcpy.Point(geom['x'], geom['y'])
+            try:
+                point = arcpy.Point(geom['x'], geom['y'])
+            except:
+                raise NullGeometryError("Point geometry is invalid or null")
             pointGeom = arcpy.Geometry("point",point,self.sr)
             return pointGeom
