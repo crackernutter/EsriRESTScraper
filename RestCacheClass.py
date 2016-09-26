@@ -5,28 +5,15 @@ class SchemaMismatch(Exception):
         self.value = value
     def __str__(self):
         return self.value
-class IncorrectWorkspaceType(Exception):
-    def __init__(self, value):
-        self.value = value
-    def __str__(self):
-        return self.value
-class TooManyRecords(Exception):
-    def __init__(self, value):
-        self.value = value
-    def __str__(self):
-        return self.value
-class MapServiceError(Exception):
-    def __init__(self, value):
-        self.value = value
-    def __str__(self):
-        return self.value
-class NullGeometryError(Exception):
-    def __init__(self, value):
-        self.value = value
-    def __str__(self):
-        return self.value
-
-    
+class IncorrectWorkspaceType(SchemaMismatch):
+    pass
+class TooManyRecords(SchemaMismatch):
+    pass
+class MapServiceError(SchemaMismatch):
+    pass
+class NullGeometryError(SchemaMismatch):
+    pass
+  
 ########GENERAL FUNCTIONS#################
 #Basic function to return an array with geometry from a multi-geometry object (polyline and polygon)
 def getMultiGeometry(geometry):
@@ -41,7 +28,6 @@ def getMultiGeometry(geometry):
 
 #Basic function to return Boolean of whether the uri is a file geodatabase or not
 def validWorkspace(uri):
-
     if ".gdb" in str(uri) or ".sde" in str(uri):
         return True
     else:
@@ -316,7 +302,7 @@ class RestCache:
             return polyGeom
         elif "POLYLINE" in self.geometryType:
             paths = geom['paths']
-            polyline = getMuliGeometry(paths)
+            polyline = getMultiGeometry(paths)
             lineGeom = arcpy.Polyline(polyline, self.sr)
             return lineGeom
         elif "POINT" in self.geometryType:

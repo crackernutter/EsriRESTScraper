@@ -9,7 +9,7 @@ This class is instantiated with the Esri REST Endpoint of a feature layer inside
 <br> e.g. 
 ```python
 import RestCacheClass
-earthquakesScraper = RestCacheClass.RestCache("http://rmgsc.cr.usgs.gov/ArcGIS/rest/services/nhss_haz/MapServer/3")
+earthquakesScraper = RestCacheClass.RestCache("http://igems.doi.gov/arcgis/rest/services/igems_haz/MapServer/3")
 ```
 
 
