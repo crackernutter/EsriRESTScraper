@@ -61,16 +61,16 @@ Version 2.0 Updates!
 
 ### Some very important updates in the Version 2.0 release.  
 
-* ijson dependency:
+* __ijson dependency__:
 The class is now dependent on the [ijson](https://pypi.python.org/pypi/ijson/) Python module.  This is an iterative json parser that doesn't wait for the entire response to be returned from the server.  I incorporated this becuase some queries to polygon feature services would take too long to return due to the amount of data in a polygon (one polygon can have hundreds of points, and a service might return 1000 polygons).  The useIjson Boolean parameter has been incorporated into the _\_getEsriRESTJSON method_.  However, if it's set to false when retrieving features, it will probably break the code without a couple minor modifications.
 
-* Debug class:
+* __Debug class__:
 I've included a debug class, mainly to assist in troubleshooting where there might be failures in the code execution.  I've included a debug Boolean parameter as part of the updateFeatureClass method.  When set to true, the class will create a log file and print to the console the progress of code execution.  You might want to change when / what is logged
 
-* Append option during update:
+* __Append option during update__:
 You can now set an append parameter to true when calling the updateFeatureClass method and the class won't delete the features in the destination feature class before adding entries from the REST endpoint.  I've used this when two endpoints have the same schema and I don't want to maintain two feature classes.  
 
-* Ability to incorporate custom fields:
+* __Ability to incorporate custom fields__:
 When running the updateFeatureClass method, it checks to ensure the feature service endpoint has the same schema as the destination feature class.  However, some of my workflows required additional fields in my destination feature class, say fields whose values are calculated based on other fields whose attributres are scraped from REST endpoints.  So I added a userFields parameter to the updateFeatureClass method that allows a user to specify custom fields that shouldn't be included in the schema match check (or the update).  So after updating the feature class, you can now incoporate a workflow to calculate values of those additional fields.  
 
 ### Some less important updates
