@@ -29,7 +29,7 @@ The name of the feature class is derived from the name in the REST endpoint, alt
 
 ### Issues:
 
-1.  The method only supports creating a feature class in a geodatabase, not a shapefile or SDE supported geodatabase.  If someone wants to modify this to support creating other types of workspaces, please do so!!
+1.  The method only supports creating a feature class in a geodatabase (enterprise or local), not a shapefile.  If someone wants to modify this to support creating other types of workspaces, please do so!!
 2.  Multipoint geometry is not supported.  Only polygon, polyline, and point geometries are supported.  
 3.  Some field types are not supported either, although the most common ones are: text, date, short, long, double, float.
 
@@ -55,6 +55,38 @@ earthquakesScraper.updateFeatureClass(earthquakesData, ["magnitude > 4"])
 This is my first github contribution, and I hope someone can find it useful.  It does rely on Esri's software and the arcpy Python library, but there are no other external dependencies.  
 
 Please let me know if you have any questions!
+
+Version 2.0 Updates!
+====================
+
+### Some very important updates in the Version 2.0 release.  
+
+* ijson dependency:
+The class is now dependent on the [ijson](https://pypi.python.org/pypi/ijson/) Python module.  This is an iterative json parser that doesn't wait for the entire response to be returned from the server.  I incorporated this becuase some queries to polygon feature services would take too long to return due to the amount of data in a polygon (one polygon can have hundreds of points, and a service might return 1000 polygons).  The useIjson Boolean parameter has been incorporated into the _\_getEsriRESTJSON method_.  However, if it's set to false when retrieving features, it will probably break the code without a couple minor modifications.
+
+* Debug class:
+I've included a debug class, mainly to assist in troubleshooting where there might be failures in the code execution.  I've included a debug Boolean parameter as part of the updateFeatureClass method.  When set to true, the class will create a log file and print to the console the progress of code execution.  You might want to change when / what is logged
+
+* Append option during update:
+You can now set an append parameter to true when calling the updateFeatureClass method and the class won't delete the features in the destination feature class before adding entries from the REST endpoint.  I've used this when two endpoints have the same schema and I don't want to maintain two feature classes.  
+
+* Ability to incorporate custom fields:
+When running the updateFeatureClass method, it checks to ensure the feature service endpoint has the same schema as the destination feature class.  However, some of my workflows required additional fields in my destination feature class, say fields whose values are calculated based on other fields whose attributres are scraped from REST endpoints.  So I added a userFields parameter to the updateFeatureClass method that allows a user to specify custom fields that shouldn't be included in the schema match check (or the update).  So after updating the feature class, you can now incoporate a workflow to calculate values of those additional fields.  
+
+### Some less important updates
+
+* Features are not deleted until records from REST endpoint for the first query are successfully returned.  So if the endpoint is unavailable or if an error occurs, you're previous features won't be deleted
+
+* Error handling for some edge cases in older versions of ArcGIS Server.  Still not perfect, but there.  
+
+* Error handling for null Point geometries
+
+* \_getEsriRESTJSON function will attempt it's operation 5 times, waiting 5 seconds between each try, before erring out. Some public ArcGIS servers have been error prone, but will often have a successful respond on a successive query.  I've found that my workflows most often err out when running the \_\_getNumRecordsFromQuery method
+
+* Better code documentation and flow
+
+
+
 
 
 
