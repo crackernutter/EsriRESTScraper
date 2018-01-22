@@ -52,6 +52,19 @@ The method will gracefully end if there is a schema mismatch between the REST en
 earthquakesScraper.updateFeatureClass(earthquakesData, ["magnitude > 4"])
 ```
 
+The full function signature for the updateFeatureClass method, as it's grown substantially since my first commit, is as follows:
+
+```python
+def updateFeatureClass(self, featureClassDestination, query=["1=1"], append=False, userFields=[], excludeFields=[], debug=False, debugLoc=sys.path[0]):
+```
+* __featureClassDestination (str)__: Local geodatabase feature class
+* __query__ (list): Single query or list of queries for the feature service (defaults to "1=1" which returns all records)
+* __append__(bool): Either appends records to the feature class or deletes all records first
+* __userFields__ (list): Fields in your local feature class (but not in the feature service) to ignore when checking for a schema match between feature class and feature service
+* __excludeFields__ (list): Fields in the feature service (but not in the feature class) to ignore when checking for a schema match
+* __debug__ (bool): Sets debug mode to true or false
+* __debugLoc__ (str): Optional override location for log file.  Defaults to execution directory.  
+ 
 This is my first github contribution, and I hope someone can find it useful.  It does rely on Esri's software and the arcpy Python library, but there are no other external dependencies.  
 
 Please let me know if you have any questions!
