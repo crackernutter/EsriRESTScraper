@@ -12,8 +12,6 @@ import logging
 import ijson
 import arcpy
 ########Exceptions################
-
-
 class SchemaMismatch(Exception):
     def __init__(self, value):
         self.value = value
@@ -21,24 +19,18 @@ class SchemaMismatch(Exception):
     def __str__(self):
         return self.value
 
-
 class IncorrectWorkspaceType(SchemaMismatch):
     pass
-
 
 class TooManyRecords(SchemaMismatch):
     pass
 
-
 class MapServiceError(SchemaMismatch):
     pass
 
-
 class NullGeometryError(SchemaMismatch):
     pass
-
 ########GENERAL FUNCTIONS#################
-
 
 def getMultiGeometry(geometry):
     """Function to return an array with geometry from a multi-geometry object (polyline and polygon)
@@ -52,14 +44,12 @@ def getMultiGeometry(geometry):
         geom.add(array)
     return geom
 
-
 def validWorkspace(uri):
     """Function to check whether workspace is a geodatbase"""
     if ".gdb" in str(uri) or ".sde" in str(uri):
         return True
     else:
         return False
-
 
 def getGeometryType(restGeom):
     """Return geometry type from REST endpoint geometry value"""
@@ -71,7 +61,6 @@ def getGeometryType(restGeom):
         return "POINT"
     else:
         return "Unknown"
-
 
 def dontVerifySSL():
     try:
@@ -85,7 +74,6 @@ def dontVerifySSL():
 
 ###############REST CACHE CLASS###########################
 
-
 class RestCache:
     def __init__(self, url, token=None, userFields=[], excludeFields=[]):
         self.url = url
@@ -97,7 +85,7 @@ class RestCache:
     def __str__(self):
         return "RestCache object based on %s" % self.url
 
-    def _getEsriRESTJSON(self, url, params, attempt=1, useIjson=False, debug=None):
+    def __getEsriRESTJSON(self, url, params, attempt=1, useIjson=False):
         """Helper function to query an Esri REST endpoint and return json"""
         # Wait five seconds if previous error
         if attempt > 1 and attempt != 6:
@@ -112,42 +100,50 @@ class RestCache:
             try:
                 response = urllib2.urlopen(req)
             except httplib.BadStatusLine as e:
-                if debug:
-                    logging.error("Bad Status Line at attempt %n: %attempt")
-                return self._getEsriRESTJSON(url, params, attempt + 1, useIjson=useIjson, debug=debug)
+                self.__logMsg(40, "Bad Status Line at attempt %n: %attempt")
+                return self.__getEsriRESTJSON(url, params, attempt + 1, useIjson=useIjson)
             except urllib2.HTTPError as e:
-                if debug:
-                    logging.error(
-                        "HTTP Error at attempt %n: sleeping" % attempt)
-                return self._getEsriRESTJSON(url, params, attempt + 1, useIjson=useIjson, debug=debug)
+                self.__logMsg(40, "HTTP Error at attempt %n: sleeping" % attempt)
+                return self.__getEsriRESTJSON(url, params, attempt + 1, useIjson=useIjson)
             except urllib2.URLError as e:
-                if debug:
-                    logging.error("Verify SSL Cert Error")
+                self.__logMsg(40, "Verify SSL Cert Error")
                 dontVerifySSL()
-                return self._getEsriRESTJSON(url, params, attempt + 1, useIjson=useIjson, debug=debug)
+                return self.__getEsriRESTJSON(url, params, attempt + 1, useIjson=useIjson)
             if useIjson:
-                if debug:
-                    logging.info("Using ijson")
+                #need to figure out a way to deal with this if error is returned, possibly stop using ijson
                 return ijson.items(response, "features.item")
             else:
                 final = json.loads(response.read())
                 if 'error' in final.keys():
-                    if debug:
-                        logging.error("Error in json loads " + str(final))
-                    return self._getEsriRESTJSON(url, params, attempt + 1, debug=debug)
+                    self.__logMsg(40, "Error in json loads " + str(final))
+                    return self.__getEsriRESTJSON(url, params, attempt + 1)
+                elif 'features' in final.keys():
+                    return final['features']
                 else:
                     return final
         else:
-            if debug:
-                logging.warning("Too many attempts")
+            self.__logMsg(30, "Too many attempts")
             raise MapServiceError("Error Accessing Map Service " + self.url)
 
     # Function that sets the attributes of the RestCache object.  All attributes are retrieved from the URL endpoint
     # To do - M values and Z values
+
+    def __setUpdateFields(self, serviceFields):
+        """Sets the fields that will be updated from the FeatureService.  This does not include ID or Geometry fields"""
+        updateFields = []
+        for field in serviceFields:
+            if (field['type'] in ['esriFieldTypeOID', 'esriFieldTypeGeometry', 'esriFieldTypeGUID'] or 'shape' in field['name'].lower() or field['name'] in self.userFields + self.excludeFields):
+                pass
+            else:
+                updateFields.append(field)
+        updateFields.insert(
+            0, {"name": 'Shape@', "type": "esriFieldTypeGeometry"})
+        self.updateFields = updateFields
+        
     def __setAttributes(self):
         """Set attributes of object based on Esri REST Endpoint for FeatureService"""
         values = {"f": "json"}
-        layerInfo = self._getEsriRESTJSON(self.url, values)
+        layerInfo = self.__getEsriRESTJSON(self.url, values)
         # Geometry Type
         geometryType = getGeometryType(layerInfo['geometryType'])
         self.geometryType = geometryType
@@ -167,15 +163,7 @@ class RestCache:
         self.wkid = wkid
         # field used to update the feature class are a subset of all the fields in a feature class
         fields = layerInfo['fields']
-        updateFields = []
-        for field in fields:
-            if (field['type'] in ['esriFieldTypeOID', 'esriFieldTypeGeometry', 'esriFieldTypeGUID'] or 'shape' in field['name'].lower() or field['name'] in self.userFields + self.excludeFields):
-                pass
-            else:
-                updateFields.append(field)
-        updateFields.insert(
-            0, {"name": 'Shape@', "type": "esriFieldTypeGeometry"})
-        self.updateFields = updateFields
+        self.__setUpdateFields(fields)
         # Max values
         if layerInfo.has_key('maxRecordCount'):
             self.maxRecordCount = int(layerInfo['maxRecordCount'])
@@ -188,7 +176,7 @@ class RestCache:
         if not self.excludeFields:
             self.excludeFields = excludeFields
             self.updateFields = [
-                f for f in self.updateFields if f['name'] not in excludeFields]
+                f for f in self.updateFields if f['name'] not in self.excludeFields]
         if not validWorkspace(location):
             raise IncorrectWorkspaceType(
                 "Incorrect workspace - feature class must be created in a local geodatabase")
@@ -247,21 +235,34 @@ class RestCache:
         arcpy.AddField_management(
             in_table=featureClass, field_name=name, field_type=fieldType, field_length=fieldLength)
 
-    def _configDebug(self, debug, debugLoc):
+    def __configDebug(self, debug, debugLoc):
+        """Allows user to write some progess indicators to a log file"""
         if debug:
+            self.debugMode = True
             module = os.path.basename(sys.argv[0])
             if module == '':
                 module = 'restcache{}.log'.format(str(datetime.datetime.now()))
             else:
                 module = module.replace(".py", ".log")
             logging.basicConfig(filename=os.path.join(debugLoc, module), level=logging.INFO)
+            logging.log(20, "Starting script at %s" %datetime.datetime.now())
+        else:
+            self.debugMode = False
+            
+    def __logMsg(self, level, *messages):
+        """Handles logging"""
+        if self.debugMode:
+            for message in messages:
+                print "{}: {}".format(logging.getLevelName(level), message)
+                logging.log(level, message)
 
     def updateFeatureClass(self, featureClass, query=["1=1"], append=False, userFields=[], excludeFields=[], debug=False, debugLoc=sys.path[0]):
         """Primary method to update an existing feature class by scraping Esri's REST endpoints.
          Method iterates over queries so user can specify non-overlapping queries to break up
-         ingestion.Method checks that the schemas of the source and destination match,
+         ingestion.  Method checks that the schemas of the source and destination match,
          ignoring fields in userFields paramter"""
-        self._configDebug(debug, debugLoc)
+        #config debug mode or not
+        self.__configDebug(debug, debugLoc)
         # check if user fileds already exist
         if not self.userFields:
             self.userFields = userFields
@@ -272,44 +273,37 @@ class RestCache:
             raise IncorrectWorkspaceType(
                 "Incorrect workspace - feature class must be created in a local geodatabase")
         if not self.__matchSchema(featureClass):
-            raise SchemaMismatch(
-                "Schema of input feature class does not match object schema")
+            raise SchemaMismatch("Schema of input feature class does not match object schema")
         queries = self.__generateQuery(query)
         cursor = None
 
         # iterate over queries
         for query in queries:
-            if debug:
-                logging.info("Working on %s" % query)
-            recordsInQuery = self.__getNumRecordsFromQuery(query, debug=debug)
+            self.__logMsg(20, "Working on %s" % query)
+            recordsInQuery = self.__getNumRecordsFromQuery(query)
             if recordsInQuery == 0:
-                if debug:
-                    logging.warning("Skipping query")
+                self.__logMsg(30, 'Skipping query')
                 continue
             elif self.__numRecordsMoreThanMax(recordsInQuery):
                 del cursor
-                raise TooManyRecords(
-                    "Query returns more than max allowed. Please refine query: " + query)
+                raise TooManyRecords("Query returns more than max allowed. Please refine query: " + query)
             # else do the rest
             rValues = {"where": query,
                        "f": "json",
                        "returnCountOnly": "false",
                        "outFields": "*"}
-            featureData = self._getEsriRESTJSON(
-                self.url + "/query", rValues, useIjson=True, debug=debug)
-            if debug:
-                logging.info("Successfully returned data")
+            featureData = self.__getEsriRESTJSON(self.url + "/query", rValues, useIjson=False)
+            #maybe - unless ijson was used and query was bad
+            self.__logMsg(20, "Successfully returned data")
 
             # Append or overwrite mode - prevents deletion if service is unavailable
             if all([not append, not cursor]):
-                if debug:
-                    logging.info("Deleting records")
+                self.__logMsg(20, "Deleting records")
                 arcpy.DeleteFeatures_management(featureClass)
 
-            # instantiate cursor
+            # instantiate cursor - if there is already a cursor, do nothing
             if not cursor:
-                if debug:
-                    logging.info("Instantiating cursor")
+                self.__logMsg(20, "Instantiating cursor")
                 updateFields = [f['name'] for f in self.updateFields]
                 cursor = arcpy.da.InsertCursor(featureClass, updateFields)
 
@@ -318,41 +312,44 @@ class RestCache:
                 try:
                     geom = self.__getGeometry(feature['geometry'])
                 except NullGeometryError as e:
-                    if debug:
-                        logging.warning("Null geometry error")
+                    self.__logMsg(30, "Null geometry error")
                     continue
                 except:
-                    if debug:
-                        logging.warning(
-                            "Some other geometry error - couldn't get geometry")
+                    self.__logMsg(30, "Some other geometry error - couldn't get geometry")
+                    continue
                 attributes = []
                 attributes.append(geom)
                 for field in self.updateFields:
                     if field['name'] == "Shape@":
                         continue
-                    elif 'date' in field['type'].lower():
-                        attributes.append(self.__handleDateAttribute(
-                            feature['attributes'][field['name']]))
                     else:
-                        """getting strange OverflowError Python int too large to convert to C long,
-                        so casting section getting problem with some services where some fields
-                        aren't returned in results so added try/catch block"""
-                        try:
-                            newAttribute = feature['attributes'][field['name']]
-                            if type(newAttribute) is long:
-                                if type(int(newAttribute)) is long:
-                                    attributes.append(float(newAttribute))
-                                else:
-                                    attributes.append(newAttribute)
-                            else:
-                                attributes.append(newAttribute)
-                        except KeyError, e:
-                            attributes.append(None)
+                        attributes.append(self.__getFieldFromFeature(feature, field))
                 cursor.insertRow(attributes)
+            self.__logMsg(20, "Finished writing data for query: %s" % query)
         # Delete cursor
         del cursor
+    
+    def __getFieldFromFeature(self, feature, field):
+        if 'date' in field['type'].lower():
+            return self.__handleDateAttribute(feature['attributes'][field['name']])
+        else:
+            """getting strange OverflowError Python int too large to convert to C long,
+            so casting section getting problem with some services where some fields
+            aren't returned in results so added try/catch block"""
+            try: 
+                newAttribute = feature['attributes'][field['name']]
+                if type(newAttribute) is long:
+                    self.__logMsg(20, "Attribute is of type long")
+                    if type(int(newAttribute)) is long:
+                        return float(newAttribute)
+                    else:
+                        return newAttribute
+                else:
+                    return newAttribute
+            except KeyError, e:
+                self.__logMsg(40, "Key error in attributes")
+                return None
 
-    # generate correct query
     def __generateQuery(self, query):
         """Generates array of queries to send to endpoint from the function paramater"""
         if query == None:
@@ -386,22 +383,24 @@ class RestCache:
                 fClassFields.append(field.name)
         fClassFields.insert(0, 'Shape@')
         objFields = [f['name'] for f in self.updateFields]
-        return sorted(fClassFields) == sorted(objFields)
+        if sorted(fClassFields) == sorted(objFields):
+            return True
+        else:
+            nonFields = [fname for fname in objFields if not fname in fClassFields]
+            self.__logMsg(40, "Schema of input feature class does not match object schema", "Fields not in feature class but in feature service",str(nonFields))
+            return False
 
     def __numRecordsMoreThanMax(self, numRecords):
         """Check record count is less than the maximum possible to prevent an incomplete cache"""
         return numRecords > self.maxRecordCount
 
-    def __getNumRecordsFromQuery(self, query="1=1", debug=None):
+    def __getNumRecordsFromQuery(self, query="1=1"):
         """Return number of records from REST endpoint based on query"""
-        if debug:
-            logging.info("Checking number of records in query")
+        self.__logMsg(20,"Checking number of records in query")
         rValues = {"where": query, "f": "json", "returnCountOnly": "true"}
-        count = self._getEsriRESTJSON(
-            self.url + "/query", rValues, debug=debug)
+        count = self.__getEsriRESTJSON(self.url + "/query", rValues)
         numRecords = count['count']
-        if debug:
-            logging.info("Query contains %d records" % numRecords)
+        self.__logMsg(20,"Query contains %d records" % numRecords)
         return numRecords
 
     def __getGeometry(self, geom):
