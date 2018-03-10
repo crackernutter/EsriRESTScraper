@@ -9,7 +9,7 @@ This class is instantiated with the Esri REST Endpoint of a feature layer inside
 <br> e.g. 
 ```python
 import RestCacheClass
-earthquakesScraper = RestCacheClass.RestCache("http://igems.doi.gov/arcgis/rest/services/igems_haz/MapServer/3")
+earthquakesScraper = RestCacheClass.RestCache("https://earthquake.usgs.gov/arcgis/rest/services/eq/event_30DaySignificant/MapServer/0")
 ```
 
 
@@ -57,9 +57,9 @@ The full function signature for the updateFeatureClass method, as it's grown sub
 ```python
 def updateFeatureClass(self, featureClassDestination, query=["1=1"], append=False, userFields=[], excludeFields=[], debug=False, debugLoc=sys.path[0]):
 ```
-* __featureClassDestination (str)__: Local geodatabase feature class
+* __featureClassDestination__ (str)__: Local geodatabase feature class
 * __query__ (list): Single query or list of queries for the feature service (defaults to "1=1" which returns all records)
-* __append__(bool): Either appends records to the feature class or deletes all records first
+* __append__ (bool): Either appends records to the feature class or deletes all records first
 * __userFields__ (list): Fields in your local feature class (but not in the feature service) to ignore when checking for a schema match between feature class and feature service
 * __excludeFields__ (list): Fields in the feature service (but not in the feature class) to ignore when checking for a schema match
 * __debug__ (bool): Sets debug mode to true or false
@@ -72,10 +72,10 @@ Please let me know if you have any questions!
 Version 3.0 Updates!
 ====================
 
-### Some very important updates in the Version 2.0 release.  
+### Some very important updates in the Version 3.0 release.  
 
 * __ijson dependency__:
-The class is now optionally dependent on the [ijson](https://pypi.python.org/pypi/ijson/) Python module.  This is an iterative json parser that doesn't wait for the entire response to be returned from the server.  I incorporated this because some queries to polygon feature services would take too long to return due to the amount of data in a polygon (one polygon can have hundreds of points, and a service might return 1000 polygons).  The useIjson Boolean parameter has been included in the updateFeatureClass method.  Setting it to false (useIjson=False) shouldn't break it though.
+The class is now optionally dependent on the [ijson](https://pypi.python.org/pypi/ijson/) Python module.  This is an iterative json parser that doesn't wait for the entire response to be returned from the server.  I incorporated this because some queries to polygon feature services would take too long to return due to the amount of data in a polygon (one polygon can have hundreds of points, and a service might return 1000 polygons).  The useIjson Boolean parameter has been included in the updateFeatureClass method.  Setting it to false (useIjson=False) and deleting the import isjon statement won't break the rest of the script.
 
 * __Debug Fixes__:
 I removed the Debug class and just incorporated Python's native logging class for debug operations.  Set debug=True in the updateFeatureClass method and the execution will write to a log file in the same directory as your script.  If you rely heavily on this, you will want to add custom log messages to the code.   
