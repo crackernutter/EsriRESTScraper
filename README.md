@@ -1,7 +1,12 @@
 EsriRESTScraper
 ===============
 
-A lightweight Python class that scrapes ESRI Rest Endpoints and parses the data into a local geodatabase
+A lightweight Python (tested in 2.x versions) class that scrapes ESRI Rest Endpoints and parses the data into a local geodatabase.
+
+### Dependencies
+*Esri's arcpy library 
+*ijson - this is easily remedied.  Check the ijson section below
+
 
 This class is instantiated with the Esri REST Endpoint of a feature layer inside a map service.  For secured map services, you can include an optional token when instantiating the class. 
 <br> e.g. 
@@ -32,7 +37,7 @@ The name of the feature class is derived from the name in the REST endpoint, alt
 3.  Some field types are not supported either, although the most common ones are: text, date, short, long, double, float.
 
 ```python
-earthquakesData = earthquakesScraper.createFeatureClass(r'C:\Geodata\earthquakes.gdb', 'earthquakes')
+earthquakesFeatureClass = earthquakesScraper.createFeatureClass(r'C:\Geodata\earthquakes.gdb', 'earthquakes')
 ```
 
 updateFeatureClass
@@ -47,7 +52,7 @@ The method will gracefully end if there is a schema mismatch between the REST en
 1. The method cannot handle how to deal with a query that returns more records and the max allowed by the service (default for most Esri REST endpoints is 1000).  Because using this data would result in an incomplete dataset, I just have the method throw an error.  A way around this is to just specify a series of queries in the query parameter, so long as each query won't exceed the max records, and the queries won't result in duplicate records.  However, a great goal would be to add some recursive function that creates a finer and finer geographic mesh, and break up the queries geographically until no query returns more records then the max.  This would be difficult for me, but is a great task for someone with the time and energy to devote to it.    
 
 ```python
-earthquakesScraper.updateFeatureClass(earthquakesData, ["magnitude > 4"])
+earthquakesScraper.updateFeatureClass(earthquakesFeatureClass, ["magnitude > 4"])
 ```
 
 The full function signature for the updateFeatureClass method, as it's grown substantially since my first commit, is as follows:
@@ -63,7 +68,7 @@ def updateFeatureClass(self, featureClassDestination, query=["1=1"], append=Fals
 * __debug__ (bool): Sets debug mode to true or false
 * __debugLoc__ (str): Optional override location for log file.  Defaults to execution directory.  
  
-This is my first github contribution, and I hope someone can find it useful.  It does rely on Esri's software and the arcpy Python library, but there are no other external dependencies.  
+This is my first github contribution, and I hope someone can find it useful.
 
 Please let me know if you have any questions!
 
