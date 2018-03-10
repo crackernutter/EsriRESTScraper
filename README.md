@@ -1,9 +1,7 @@
 EsriRESTScraper
 ===============
 
-Have you ever come across a ArcGIS REST endpoint, and wished you could download the data locally?  Do you need to periodically update a local geodatabase with data from an ArcGIS Rest endpoint (instead of just using the external REST endpoint in a mapping application)?  Maybe you are not an authoritative data owner, and have some unique geoprocessing or workflow needs that cannot be completed using web services.   Or because you have 'disconnected environment' needs and would like to display the most recent copy of the data available before an internet outage.  Then use this!! I use it for downloading local copies of many of the USGS Natural Hazard Support System feeds to support local workflows (and more reliable web applications).   
-
-A Python class that scrapes ESRI Rest Endpoints and parses the data into a local geodatabase
+A lightweight Python class that scrapes ESRI Rest Endpoints and parses the data into a local geodatabase
 
 This class is instantiated with the Esri REST Endpoint of a feature layer inside a map service.  For secured map services, you can include an optional token when instantiating the class. 
 <br> e.g. 
@@ -57,7 +55,7 @@ The full function signature for the updateFeatureClass method, as it's grown sub
 ```python
 def updateFeatureClass(self, featureClassDestination, query=["1=1"], append=False, userFields=[], excludeFields=[], debug=False, debugLoc=sys.path[0]):
 ```
-* __featureClassDestination__ (str)__: Local geodatabase feature class
+* __featureClassDestination__ (str): Local geodatabase feature class
 * __query__ (list): Single query or list of queries for the feature service (defaults to "1=1" which returns all records)
 * __append__ (bool): Either appends records to the feature class or deletes all records first
 * __userFields__ (list): Fields in your local feature class (but not in the feature service) to ignore when checking for a schema match between feature class and feature service
