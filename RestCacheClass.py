@@ -7,8 +7,6 @@ import time
 import logging
 import arcpy
 
-logging.getLogger("requests").setLevel(logging.ERROR)
-logging.getLogger("matplotlib").setLevel(logging.ERROR)
 ########Exceptions################
 class SchemaMismatch(Exception):
     def __init__(self, value):
