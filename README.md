@@ -1,4 +1,4 @@
-EsriRESTScraper Python3
+EsriRESTScraper
 ===============
 
 A lightweight Python (tested in 3.x versions and 2.x versions) class that scrapes ESRI Rest Endpoints and parses the data into a local geodatabase.
