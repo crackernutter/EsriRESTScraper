@@ -1,14 +1,14 @@
 EsriRESTScraper
 ===============
 
-A lightweight Python (tested in 3.x versions and 2.x versions) class that scrapes ESRI REST endpoints and parses the data into a local or enterprise geodatabase
+A lightweight Python (tested in Python 3.x and 2.x) class that scrapes ESRI REST endpoints and parses the data into a local or enterprise geodatabase feature class
 
 Updates for Python 3
 ====================
 
 ### Some updates in the latest release
 * __Paging support__:
-Module now utilizes Esri REST API pagination support to scrape entire record sets when a single request would not otherwise capture all records in the query and the module would throw a TooManyRecords exception
+Module now utilizes Esri REST API pagination support to scrape entire record sets when a single request would not otherwise capture all records in the query and the module would throw a TooManyRecords exception.  If the feature service does not support pagination, then if the query exceeds the maximum records returned in a single query, the exception is thrown.  
 
 * __No ijson dependency__:
 Ijson dependency removed - the module relies soley on Python's requests library
@@ -22,6 +22,8 @@ Scraping no longer fails when feature service contains a global id.  The module 
 ### Dependencies
 *Esri's arcpy library - Python 2.x library installed wtih ArcGIS for Desktop (ArcMap) and Python 3.x library installed ArcGIS Pro
 
+Instructions
+====================
 
 This class is instantiated with the Esri REST Endpoint of a feature layer inside a map service.  For secured map services, you can include an optional token when instantiating the class. 
 <br> e.g. 
@@ -60,10 +62,6 @@ updateFeatureClass
 This method makes one or more REST calls, parses the data, and updates your local geodatabase.  Pretty straightforward.  This method accepts as input the feature class to update, a single query or list of queries (the default is "1=1"), and a Boolean value on whether to append to the existing dataset or overwrite (default is to overwrite since I didn't want to deal with differentials).
 
 The method will gracefully end if there is a schema mismatch between the REST endpoint and the feature class to update, or if one of the queries returns a number of records equal to or more than the max records attribute specified in the REST endpoint.  
-
-### Issues:
-
-1. The method cannot handle how to deal with a query that returns more records and the max allowed by the service (default for most Esri REST endpoints is 1000).  Because using this data would result in an incomplete dataset, I just have the method throw an error.  A way around this is to just specify a series of queries in the query parameter, so long as each query won't exceed the max records, and the queries won't result in duplicate records.  However, a great goal would be to add some recursive function that creates a finer and finer geographic mesh, and break up the queries geographically until no query returns more records then the max.  This would be difficult for me, but is a great task for someone with the time and energy to devote to it.    
 
 ```python
 earthquakesScraper.updateFeatureClass(earthquakesFeatureClass, ["magnitude > 4"])
