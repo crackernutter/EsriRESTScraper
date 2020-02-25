@@ -4,7 +4,7 @@ EsriRESTScraper Python3
 A lightweight Python (tested in 3.x versions) class that scrapes ESRI Rest Endpoints and parses the data into a local geodatabase.
 
 ### Dependencies
-*Esri's arcpy library 
+*Esri's arcpy library - Python 2.x library installed wtih ArcGIS for Desktop (ArcMap) and Python 3.x library installed ArcGIS Pro
 
 
 This class is instantiated with the Esri REST Endpoint of a feature layer inside a map service.  For secured map services, you can include an optional token when instantiating the class. 
