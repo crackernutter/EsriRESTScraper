@@ -8,10 +8,10 @@ Updates for Python 3
 
 ### Some updates in the latest release
 * __Paging support__:
-Module now utilizes Esri REST API pagination support to scrape entire record sets when a single request would not otherwise capture all records in the query and the module would Throw a TooManyRecordsQuery
+Module now utilizes Esri REST API pagination support to scrape entire record sets when a single request would not otherwise capture all records in the query and the module would throw a TooManyRecords exception
 
 * __No ijson dependency__:
-I removed the ijson dependency and the module relies soley on requests.
+Ijson dependency removed - the module relies soley on Python's requests library
 
 * __Support for multipoint geometry__:
 Multipoint geometry feature classes/services are now supported.
