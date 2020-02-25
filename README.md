@@ -3,7 +3,7 @@ EsriRESTScraper Python3
 
 A lightweight Python (tested in 3.x versions and 2.x versions) class that scrapes ESRI Rest Endpoints and parses the data into a local geodatabase.
 
-Updates for Python 3!
+Updates for Python 3
 ====================
 
 ### Some updates in the latest release
