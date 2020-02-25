@@ -75,7 +75,7 @@ Updates!
 
 ### Some updates in the latest release (refactored for Python 3)
 * __No ijson dependency__:
-I removed the ijson dependency and the module relies soley on requsts.
+I removed the ijson dependency and the module relies soley on requests.
 
 * __Support for multipoint geometry__:
 Multipoint geometry feature classes/services are now supported.
