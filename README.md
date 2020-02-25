@@ -1,11 +1,10 @@
-EsriRESTScraper
+EsriRESTScraper Python3
 ===============
 
-A lightweight Python (tested in 2.x versions) class that scrapes ESRI Rest Endpoints and parses the data into a local geodatabase.
+A lightweight Python (tested in 3.x versions) class that scrapes ESRI Rest Endpoints and parses the data into a local geodatabase.
 
 ### Dependencies
 *Esri's arcpy library 
-*ijson - this is easily remedied.  Check the ijson section below
 
 
 This class is instantiated with the Esri REST Endpoint of a feature layer inside a map service.  For secured map services, you can include an optional token when instantiating the class. 
@@ -33,8 +32,7 @@ The name of the feature class is derived from the name in the REST endpoint, alt
 ### Issues:
 
 1.  The method only supports creating a feature class in a geodatabase (enterprise or local), not a shapefile.  If someone wants to modify this to support creating other types of workspaces, please do so!!
-2.  Multipoint geometry is not supported.  Only polygon, polyline, and point geometries are supported.  
-3.  Some field types are not supported either, although the most common ones are: text, date, short, long, double, float.
+2.  Some field types are not supported either, although the most common ones are: text, date, short, long, double, float.
 
 ```python
 earthquakesFeatureClass = earthquakesScraper.createFeatureClass(r'C:\Geodata\earthquakes.gdb', 'earthquakes')
@@ -75,10 +73,18 @@ Please let me know if you have any questions!
 Version 3.0 Updates!
 ====================
 
-### Some very important updates in the Version 3.0 release.  
+### Some updates in the latest release (refactored for Python 3)
+* __No ijson dependency__:
+I removed the ijson dependency and the module relies soley on requsts.
 
-* __ijson dependency__:
-The class is now optionally dependent on the [ijson](https://pypi.python.org/pypi/ijson/) Python module.  This is an iterative json parser that doesn't wait for the entire response to be returned from the server.  I incorporated this because some queries to polygon feature services would take too long to return due to the amount of data in a polygon (one polygon can have hundreds of points, and a service might return 1000 polygons).  The useIjson Boolean parameter has been included in the updateFeatureClass method.  Setting it to false (useIjson=False) and deleting the import isjon statement won't break the rest of the script.
+* __Support for multipoint geometry__:
+Multipoint geometry feature classes/services are now supported.
+
+* __GlobalID bug fixed__:
+Scraping no longer fails when feature service contains a global id.  The module simply ignores this field type.
+
+
+### Previous version updates  
 
 * __Debug Fixes__:
 I removed the Debug class and just incorporated Python's native logging class for debug operations.  Set debug=True in the updateFeatureClass method and the execution will write to a log file in the same directory as your script.  If you rely heavily on this, you will want to add custom log messages to the code.   
