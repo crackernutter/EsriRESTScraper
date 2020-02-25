@@ -1,7 +1,23 @@
 EsriRESTScraper Python3
 ===============
 
-A lightweight Python (tested in 3.x versions) class that scrapes ESRI Rest Endpoints and parses the data into a local geodatabase.
+A lightweight Python (tested in 3.x versions and 2.x versions) class that scrapes ESRI Rest Endpoints and parses the data into a local geodatabase.
+
+Updates for Python 3!
+====================
+
+### Some updates in the latest release
+* __Paging support__:
+Module now utilizes Esri REST API pagination support to scrape entire record sets when a single request would not otherwise capture all records in the query and the module would Throw a TooManyRecordsQuery
+
+* __No ijson dependency__:
+I removed the ijson dependency and the module relies soley on requests.
+
+* __Support for multipoint geometry__:
+Multipoint geometry feature classes/services are now supported.
+
+* __GlobalID bug fixed__:
+Scraping no longer fails when feature service contains a global id.  The module simply ignores this field type.
 
 ### Dependencies
 *Esri's arcpy library - Python 2.x library installed wtih ArcGIS for Desktop (ArcMap) and Python 3.x library installed ArcGIS Pro
@@ -69,20 +85,6 @@ def updateFeatureClass(self, featureClassDestination, query=["1=1"], append=Fals
 This is my first github contribution, and I hope someone can find it useful.
 
 Please let me know if you have any questions!
-
-Updates!
-====================
-
-### Some updates in the latest release (refactored for Python 3)
-* __No ijson dependency__:
-I removed the ijson dependency and the module relies soley on requests.
-
-* __Support for multipoint geometry__:
-Multipoint geometry feature classes/services are now supported.
-
-* __GlobalID bug fixed__:
-Scraping no longer fails when feature service contains a global id.  The module simply ignores this field type.
-
 
 ### Previous version updates  
 
