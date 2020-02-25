@@ -70,7 +70,7 @@ This is my first github contribution, and I hope someone can find it useful.
 
 Please let me know if you have any questions!
 
-Version 3.0 Updates!
+Updates!
 ====================
 
 ### Some updates in the latest release (refactored for Python 3)
